@@ -27,18 +27,22 @@ def get_user_input():
     fare = st.sidebar.slider("Fare Paid", 0.0, 500.0, 32.2)
 
     # Convert input to model format
+     # Encode sex
     sex_encoded = 1 if sex == 'male' else 0
 
-    data = {
-        "Pclass": pclass,
-        "Sex": sex_encoded,
-        "Age": age,
-        "SibSp": sibsp,
-        "Parch": parch,
-        "Fare": fare
+    # Create input in the correct order and with correct names
+    input_dict = {
+        'Pclass': pclass,
+        'Sex': sex_encoded,
+        'Age': age,
+        'SibSp': sibsp,
+        'Parch': parch,
+        'Fare': fare
     }
 
-    return pd.DataFrame(data, index=[0])
+  # Create DataFrame using the feature names expected by the model
+    input_df = pd.DataFrame([input_dict])[model.feature_names_in_]
+    return input_df
 
 input_df = get_user_input()
 
