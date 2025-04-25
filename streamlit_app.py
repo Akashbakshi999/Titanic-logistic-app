@@ -10,9 +10,9 @@ st.title("🚢 Titanic Survival Prediction App")
 st.write("Enter passenger details to predict survival:")
 
 # Check if model file exists
-model_path = "logistic_model.pkl"
+model_path = "titanic_model.pkl"
 if not os.path.exists(model_path):
-    st.error("🚫 Model file not found. Please upload 'logistic_model.pkl' to your app directory.")
+    st.error("🚫 Model file not found. Please upload 'titanic_model.pkl' to your app directory.")
     st.stop()
 
 # Load model
