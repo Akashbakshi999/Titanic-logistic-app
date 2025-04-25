@@ -4,12 +4,17 @@ import pandas as pd
 import numpy as np
 import joblib
 
-# Load model
-model = joblib.load("titanic_model.pkl")
-
 st.set_page_config(page_title="Titanic Prediction", layout="centered")
 st.title("🚢 Titanic Survival Prediction")
 st.write("Enter passenger details to predict survival:")
+
+# Safe load
+if not os.path.exists("titanic_model.pkl"):
+    st.error("🚫 Model file not found. Please upload 'titanic_model.pkl' to the app directory.")
+    st.stop()
+
+# Load model
+model = joblib.load("titanic_model.pkl")
 
 # Sidebar user input
 def get_user_input():
