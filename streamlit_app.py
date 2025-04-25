@@ -1,36 +1,36 @@
-# app.py
 import streamlit as st
 import pandas as pd
 import numpy as np
 import joblib
-import os 
+import os
 
-st.set_page_config(page_title="Titanic Prediction", layout="centered")
-st.title("🚢 Titanic Survival Prediction")
+# Page config
+st.set_page_config(page_title="Titanic Survival Predictor", layout="centered")
+st.title("🚢 Titanic Survival Prediction App")
 st.write("Enter passenger details to predict survival:")
 
-# Safe load
-if not os.path.exists("logistic_model.pkl"):
-    st.error("🚫 Model file not found. Please upload 'logistic_model.pkl' to the app directory.")
+# Check if model file exists
+model_path = "logistic_model.pkl"
+if not os.path.exists(model_path):
+    st.error("🚫 Model file not found. Please upload 'logistic_model.pkl' to your app directory.")
     st.stop()
 
 # Load model
-model = joblib.load("logistic_model.pkl")
+model = joblib.load(model_path)
 
-# Sidebar user input
+# Input form
 def get_user_input():
-    pclass = st.sidebar.selectbox("Passenger Class (1 = 1st, 2 = 2nd, 3 = 3rd)", [1, 2, 3])
+    pclass = st.sidebar.selectbox("Passenger Class", [1, 2, 3])
     sex = st.sidebar.radio("Sex", ['male', 'female'])
-    age = st.sidebar.slider("Age", 0, 80, 25)
+    age = st.sidebar.slider("Age", 0, 80, 30)
     sibsp = st.sidebar.slider("Siblings/Spouses Aboard", 0, 8, 0)
     parch = st.sidebar.slider("Parents/Children Aboard", 0, 6, 0)
     fare = st.sidebar.slider("Fare Paid", 0.0, 500.0, 32.2)
 
-    # Convert input to model format
-     # Encode sex
+    # Encode sex: male = 1, female = 0
     sex_encoded = 1 if sex == 'male' else 0
 
-    # Create input in the correct order and with correct names
+    # Construct input with correct column names and order
     input_dict = {
         'Pclass': pclass,
         'Sex': sex_encoded,
@@ -40,24 +40,26 @@ def get_user_input():
         'Fare': fare
     }
 
-  # Create DataFrame using the feature names expected by the model
-    input_df = pd.DataFrame([input_dict])[model.feature_names_in_]
+    expected_cols = ['Pclass', 'Sex', 'Age', 'SibSp', 'Parch', 'Fare']
+    input_df = pd.DataFrame([input_dict], columns=expected_cols)
+
     return input_df
 
+# Get input data
 input_df = get_user_input()
 
 # Display input
 st.subheader("Passenger Input Data")
 st.write(input_df)
 
-# Prediction
+# Predict
 prediction = model.predict(input_df)
 prediction_proba = model.predict_proba(input_df)
 
-# Result
+# Output
 st.subheader("Prediction")
-result = "🟢 Survived" if prediction[0] == 1 else "🔴 Did Not Survive"
-st.write(f"The model predicts: **{result}**")
+result_text = "🟢 Survived" if prediction[0] == 1 else "🔴 Did Not Survive"
+st.write(f"The model predicts: **{result_text}**")
 
 st.subheader("Prediction Probability")
-st.write(f"Chance of survival: **{prediction_proba[0][1]*100:.2f}%**")
+st.write(f"Chance of survival: **{prediction_proba[0][1] * 100:.2f}%**")
