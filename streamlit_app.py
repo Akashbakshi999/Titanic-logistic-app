@@ -10,12 +10,12 @@ st.title("🚢 Titanic Survival Prediction")
 st.write("Enter passenger details to predict survival:")
 
 # Safe load
-if not os.path.exists("titanic_model.pkl"):
-    st.error("🚫 Model file not found. Please upload 'titanic_model.pkl' to the app directory.")
+if not os.path.exists("logistic_model.pkl"):
+    st.error("🚫 Model file not found. Please upload 'logistic_model.pkl' to the app directory.")
     st.stop()
 
 # Load model
-model = joblib.load("titanic_model.pkl")
+model = joblib.load("logistic_model.pkl")
 
 # Sidebar user input
 def get_user_input():
