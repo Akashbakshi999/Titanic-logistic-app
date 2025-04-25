@@ -3,6 +3,7 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import joblib
+import os 
 
 st.set_page_config(page_title="Titanic Prediction", layout="centered")
 st.title("🚢 Titanic Survival Prediction")
