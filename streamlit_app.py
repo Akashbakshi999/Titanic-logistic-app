@@ -1,80 +1,53 @@
+# app.py
 import streamlit as st
 import pandas as pd
-from sklearn.linear_model import LogisticRegression
-from sklearn.model_selection import train_test_split
-from sklearn.metrics import accuracy_score, confusion_matrix, classification_report
-from sklearn.preprocessing import LabelEncoder
+import numpy as np
+import joblib
 
-st.title("🚢 Titanic Survival Prediction App")
+# Load model
+model = joblib.load("titanic_model.pkl")
 
-# Upload train and test data
-train_file = st.file_uploader("Upload Titanic Train CSV", type="csv")
-test_file = st.file_uploader("Upload Titanic Test CSV", type="csv")
+st.set_page_config(page_title="Titanic Prediction", layout="centered")
+st.title("🚢 Titanic Survival Prediction")
+st.write("Enter passenger details to predict survival:")
 
-if train_file is not None and test_file is not None:
-    train_df = pd.read_csv(train_file)
-    test_df = pd.read_csv(test_file)
+# Sidebar user input
+def get_user_input():
+    pclass = st.sidebar.selectbox("Passenger Class (1 = 1st, 2 = 2nd, 3 = 3rd)", [1, 2, 3])
+    sex = st.sidebar.radio("Sex", ['male', 'female'])
+    age = st.sidebar.slider("Age", 0, 80, 25)
+    sibsp = st.sidebar.slider("Siblings/Spouses Aboard", 0, 8, 0)
+    parch = st.sidebar.slider("Parents/Children Aboard", 0, 6, 0)
+    fare = st.sidebar.slider("Fare Paid", 0.0, 500.0, 32.2)
 
-    # Define LabelEncoders globally
-    sex_encoder = LabelEncoder()
-    embarked_encoder = LabelEncoder()
+    # Convert input to model format
+    sex_encoded = 1 if sex == 'male' else 0
 
-    # Preprocessing function
-    def preprocess(df, is_train=True):
-        df = df.copy()
-        df['Age'].fillna(df['Age'].median(), inplace=True)
-        df['Fare'].fillna(df['Fare'].median(), inplace=True)
-        df['Embarked'].fillna('S', inplace=True)
+    data = {
+        "Pclass": pclass,
+        "Sex": sex_encoded,
+        "Age": age,
+        "SibSp": sibsp,
+        "Parch": parch,
+        "Fare": fare
+    }
 
-        if is_train:
-            df['Sex'] = sex_encoder.fit_transform(df['Sex'])
-            df['Embarked'] = embarked_encoder.fit_transform(df['Embarked'])
-        else:
-            df['Sex'] = sex_encoder.transform(df['Sex'])
-            df['Embarked'] = embarked_encoder.transform(df['Embarked'])
+    return pd.DataFrame(data, index=[0])
 
-        return df
+input_df = get_user_input()
 
-    train_df = preprocess(train_df, is_train=True)
-    test_df = preprocess(test_df, is_train=False)
+# Display input
+st.subheader("Passenger Input Data")
+st.write(input_df)
 
-    # Features and labels
-    features = ['Pclass', 'Sex', 'Age', 'SibSp', 'Parch', 'Fare', 'Embarked']
-    X = train_df[features]
-    y = train_df['Survived']
-    X_train, X_val, y_train, y_val = train_test_split(X, y, test_size=0.2, random_state=42)
+# Prediction
+prediction = model.predict(input_df)
+prediction_proba = model.predict_proba(input_df)
 
-    # Train model
-    model = LogisticRegression(max_iter=200)
-    model.fit(X_train, y_train)
+# Result
+st.subheader("Prediction")
+result = "🟢 Survived" if prediction[0] == 1 else "🔴 Did Not Survive"
+st.write(f"The model predicts: **{result}**")
 
-    # Evaluation
-    y_pred = model.predict(X_val)
-    st.subheader("📊 Model Evaluation")
-    st.write(f"**Accuracy:** {accuracy_score(y_val, y_pred):.2f}")
-    st.text("Confusion Matrix:")
-    st.write(confusion_matrix(y_val, y_pred))
-    st.text("Classification Report:")
-    st.text(classification_report(y_val, y_pred))
-
-    # Predict on test set
-    st.subheader("🧪 Predict on Test Set")
-
-    # 🔍 Check shape and feature match
-    st.write("Input features shape:", test_df[features].shape)
-    st.write("Expected features:", model.n_features_in_)
-
-    try:
-        test_predictions = model.predict(test_df[features])
-        test_df['Survived_Prediction'] = test_predictions
-        st.write(test_df[['PassengerId', 'Survived_Prediction']].head())
-
-        # Download prediction
-        st.download_button(
-            label="📥 Download Predictions as CSV",
-            data=test_df[['PassengerId', 'Survived_Prediction']].to_csv(index=False),
-            file_name='titanic_predictions.csv',
-            mime='text/csv'
-        )
-    except ValueError as e:
-        st.error(f"Prediction failed: {e}")
+st.subheader("Prediction Probability")
+st.write(f"Chance of survival: **{prediction_proba[0][1]*100:.2f}%**")
